@@ -21,7 +21,7 @@ path.exist? #=> false
 
 ## Documentation
 
-- [API Documentation](http://www.rubydoc.info/gems/naming/)
+- [API Documentation](http://www.rubydoc.info/gems/temppath/)
 
 ## Licence
 
