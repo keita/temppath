@@ -2,6 +2,10 @@ require 'simplecov'
 require 'temppath'
 
 describe 'Temppath' do
+  before do
+    Temppath.update_tempdir
+  end
+
   it 'should get temporary path' do
     Temppath.create.should.kind_of Pathname
     Temppath.create.should != Temppath.create
@@ -18,6 +22,19 @@ describe 'Temppath' do
 
   it 'should be in the temporary directory' do
     Temppath.create.dirname.should == Temppath.dir
+  end
+
+  it 'should update current temporary directory' do
+    old_dir = Temppath.dir
+    new_dir = Temppath.update_tempdir
+    old_dir.should != new_dir
+    old_dir.should.not.exist
+  end
+
+  it 'should remove current temporary directory' do
+    dir = Temppath.dir
+    Temppath.remove_tempdir
+    dir.should.not.exist
   end
 
   it 'should get unlink mode' do

@@ -13,9 +13,6 @@ require 'fileutils'
 #   #=> #<Pathname:/tmp/ruby-temppath-20130407-5775-w5k77l/f41bd6c5-fc99-4b7a-8f68-95b7ae4a6b22>
 #   path.exist? #=> false
 module Temppath
-  @dir = Pathname.new(Dir.mktmpdir("ruby-temppath-"))
-  @unlink = true
-
   class << self
     # @return [Pathname]
     #   defalut temporary directory for paths created by Temppath
@@ -39,6 +36,33 @@ module Temppath
       return path
     end
 
+    # Remove curren temporary directory and create a new temporary directory and
+    # use it.
+    #
+    # @return [Pathname]
+    #   new temporary directory
+    def update_tempdir
+      remove_tempdir
+      @dir = create_tempdir
+    end
+
+    # Remove current temporary directory.
+    #
+    # @return [void]
+    def remove_tempdir
+      FileUtils.remove_entry_secure(@dir) if @dir.exist?
+    end
+
+    private
+
+    # Create a new temporary directory.
+    #
+    # @return [Pathname]
+    #   temporary directory
+    def create_tempdir
+      Pathname.new(Dir.mktmpdir("ruby-temppath-"))
+    end
+
     # Generate random UUID for filename of temporary path.
     #
     # @return [String]
@@ -46,13 +70,15 @@ module Temppath
     def generate_uuid
       UUIDTools::UUID.random_create.to_s
     end
-    private :generate_uuid
   end
+
+  @dir = create_tempdir
+  @unlink = true
 end
 
 # Remove Temppath's temporary directory.
 Kernel.at_exit do
   if Temppath.unlink
-    FileUtils.remove_entry_secure(Temppath.dir) rescue Errno::ENOENT
+    Temppath.remove_tempdir rescue Errno::ENOENT
   end
 end
