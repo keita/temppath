@@ -18,9 +18,9 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_dependency "uuidtools", "~> 2.1.3"
-  gem.add_development_dependency "bacon", "~> 1.2.0"
+  gem.add_dependency "uuidtools"
+  gem.add_development_dependency "bacon"
   gem.add_development_dependency "yard"
-  gem.add_development_dependency "redcarpet"
+  gem.add_development_dependency "redcarpet" unless RUBY_PLATFORM == 'java'
   gem.add_development_dependency "rake"
 end
