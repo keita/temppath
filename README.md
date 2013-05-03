@@ -23,9 +23,9 @@ path.exist? #=> false
 
 - [API Documentation](http://www.rubydoc.info/gems/temppath/)
 
-## Licence
+## License
 
-Temppath is free software distributed under MIT licence.
+Temppath is free software distributed under MIT license.
 
 ## Contributing
 
