@@ -13,10 +13,30 @@ deleted when Ruby exits.
 
 ## Usage
 
+#### Create a path
+
 ```ruby
 path = Temppath.create
 #=> #<Pathname:/tmp/ruby-temppath-20130407-5775-w5k77l/f41bd6c5-fc99-4b7a-8f68-95b7ae4a6b22>
 path.exist? #=> false
+path.open("w")
+"%o" % path.stat.mode #=> "100600" (default permission 0600)
+```
+
+#### Create a directory
+
+```ruby
+path = Temppath.mkdir
+path.directory? #=> true
+"%o" % path.stat.mode #=> "40700"
+```
+
+#### Create a empty file
+
+```ruby
+path = Temppath.touch
+path.file? #=> true
+"%o" % path.stat.mode #=> "100600"
 ```
 
 ## Documentation
