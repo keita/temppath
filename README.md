@@ -31,7 +31,7 @@ path.directory? #=> true
 "%o" % path.stat.mode #=> "40700"
 ```
 
-#### Create a empty file
+#### Create an empty file
 
 ```ruby
 path = Temppath.touch
