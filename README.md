@@ -7,16 +7,16 @@ deleted when Ruby exits.
 
 [![Gem Version](https://badge.fury.io/rb/temppath.png)](http://badge.fury.io/rb/temppath) [![Build Status](https://travis-ci.org/keita/temppath.png?branch=master)](https://travis-ci.org/keita/temppath) [![Coverage Status](https://coveralls.io/repos/keita/temppath/badge.png?branch=master)](https://coveralls.io/r/keita/temppath) [![Code Climate](https://codeclimate.com/github/keita/temppath.png)](https://codeclimate.com/github/keita/temppath)
 
-## Installation
-
-    $ gem install temppath
-
 ## Features
 
 * You can generate a path without file.
 * Temppath can generate files and directories as well. Therefore you are free
   from confusion which is correct tmpfile/tempfile or tmpdir/tempdir.
 * Generated paths are `Pathname` objects.
+
+## Installation
+
+    $ gem install temppath
 
 ## Usage
 
