@@ -15,7 +15,7 @@ deleted when Ruby exits.
 
 * You can generate a path without file.
 * Temppath can generate files and directories as well. Therefore you are free
-  from confusions which is correct tmpfile/tempfile or tmpdir/tempdir.
+  from confusion which is correct tmpfile/tempfile or tmpdir/tempdir.
 * Generated paths are `Pathname` objects.
 
 ## Usage
