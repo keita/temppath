@@ -27,6 +27,7 @@ path.open("w")
 
 ```ruby
 path = Temppath.mkdir
+path.exist?     #=> true
 path.directory? #=> true
 "%o" % path.stat.mode #=> "40700"
 ```
@@ -35,7 +36,32 @@ path.directory? #=> true
 
 ```ruby
 path = Temppath.touch
-path.file? #=> true
+path.exist? #=> true
+path.file?  #=> true
+"%o" % path.stat.mode #=> "100600"
+```
+
+#### Use temporary path generator
+
+You can use Temppath::Generator when you want to use multiple base
+directory. Generated paths have same natures as paths from Tempath.create,
+mkdir, and touch.
+
+```ruby
+temppath = Temppath::Generator.new("/tmp/other-dir")
+path = temppath.create
+path.exist? #=> false
+path.open("w")
+"%o" % path.stat.mode #=> "100600"
+ 
+temppath.mkdir
+path.exist?     #=> true
+path.directory? #=> true
+"%o" % path.stat.mode #=> "40700"
+ 
+temppath.touch
+path.exist? #=> true
+path.file?  #=> true
 "%o" % path.stat.mode #=> "100600"
 ```
 
