@@ -48,18 +48,20 @@ directory. Generated paths have same natures as paths from Tempath.create,
 mkdir, and touch.
 
 ```ruby
+# make a generator
 temppath = Temppath::Generator.new("/tmp/other-dir")
+ 
 path = temppath.create
 path.exist? #=> false
 path.open("w")
 "%o" % path.stat.mode #=> "100600"
  
-temppath.mkdir
+path = temppath.mkdir
 path.exist?     #=> true
 path.directory? #=> true
 "%o" % path.stat.mode #=> "40700"
  
-temppath.touch
+path = temppath.touch
 path.exist? #=> true
 path.file?  #=> true
 "%o" % path.stat.mode #=> "100600"
