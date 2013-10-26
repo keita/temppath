@@ -11,6 +11,13 @@ deleted when Ruby exits.
 
     $ gem install temppath
 
+## Features
+
+* You can generate a path without file.
+* Temppath can generate files and directories as well. Therefore you are free
+  from confusions which is correct tmpfile/tempfile or tmpdir/tempdir.
+* Generated paths are `Pathname` objects.
+
 ## Usage
 
 #### Create a path
@@ -43,9 +50,9 @@ path.file?  #=> true
 
 #### Use temporary path generator
 
-You can use Temppath::Generator when you want to use multiple base
-directory. Generated paths have same natures as paths from Tempath.create,
-mkdir, and touch.
+You can use `Temppath::Generator` when you want to use multiple base
+directory. Generated paths have same natures as paths from `Tempath.create`,
+`mkdir`, and `touch`.
 
 ```ruby
 # make a generator
