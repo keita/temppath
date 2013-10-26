@@ -116,14 +116,15 @@ module Temppath
       return path
     end
 
-    # Remove current base directory, create a new base directory, and
-    # use it.
+    # Remove current base directory and change to use a new base directory.
     #
+    # @param basedir [Pathname]
+    #   new base directory, or nil
     # @return [Pathname]
     #   new base directory
-    def update_basedir
+    def update_basedir(basedir=nil)
       remove_basedir
-      @basedir = create_basedir
+      @basedir = basedir || create_basedir
     end
 
     # Remove current temporary directory.

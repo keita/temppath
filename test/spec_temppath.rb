@@ -28,6 +28,17 @@ describe 'Temppath' do
     new_dir = Temppath.update_basedir
     old_dir.should != new_dir
     old_dir.should.not.exist
+    new_dir.should.exist
+  end
+
+  it 'should update current base directory to specific directory' do
+    old_dir = Temppath.basedir
+    new_dir = Pathname.new(Dir.mktmpdir("ruby-temppath-test"))
+    _new_dir = Temppath.update_basedir(new_dir)
+    old_dir.should != _new_dir
+    old_dir.should.not.exist
+    _new_dir.should.exist
+    _new_dir.should == new_dir
   end
 
   it 'should remove current base directory' do
