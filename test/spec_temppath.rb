@@ -47,6 +47,18 @@ describe Temppath do
     dir.should.not.exist
   end
 
+  it 'should get basename' do
+    Temppath.basename.should == ""
+  end
+
+  it 'should set basename' do
+    Temppath.basename = "test_"
+    Temppath.basename.should == "test_"
+    Temppath.create.basename.to_s.should.start_with "test_"
+    Temppath.basename = ""
+    Temppath.create.basename.to_s.should.not.start_with "test_"
+  end
+
   it 'should get unlink mode' do
     Temppath.unlink.should == true
   end
@@ -122,7 +134,7 @@ describe Temppath::Generator do
   before do
     Temppath.update_basedir
     @dir = Dir.mktmpdir("ruby-temppath-generator-test")
-    @generator = Temppath::Generator.new(@dir)
+    @generator = Temppath::Generator.new(@dir, basename: "test_")
   end
 
   it "should generate a path" do
@@ -151,13 +163,13 @@ describe Temppath::Generator do
   it "should have own base directory" do
     Temppath.basedir.should != @generator.basedir
 
-    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    dir = Pathname.new(Dir.mktmpdir("ruby-temppath-generator-test"))
     generator = Temppath::Generator.new(dir)
     generator.basedir.should != @generator.basedir
   end
 
   it "should make base directory with #create if it doesn't exist" do
-    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    dir = Pathname.new(Dir.mktmpdir("ruby-temppath-generator-test"))
     generator = Temppath::Generator.new(dir + "create")
     generator.basedir.should.not.exist
     generator.create
@@ -165,7 +177,7 @@ describe Temppath::Generator do
   end
 
   it "should make base directory with #mkdir if it doesn't exist" do
-    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    dir = Pathname.new(Dir.mktmpdir("ruby-temppath-generator-test"))
     generator = Temppath::Generator.new(dir + "mkdir")
     generator.basedir.should.not.exist
     generator.create
@@ -173,10 +185,25 @@ describe Temppath::Generator do
   end
 
   it "should make base directory with #touch if it doesn't exist" do
-    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    dir = Pathname.new(Dir.mktmpdir("ruby-temppath-generator-test"))
     generator = Temppath::Generator.new(dir + "touch")
     generator.basedir.should.not.exist
     generator.create
     generator.basedir.should.exist
+  end
+
+  it "should make base directory and parents" do
+    dir = Pathname.new(Dir.mktmpdir("ruby-temppath-generator-test"))
+    generator = Temppath::Generator.new(dir + "a" + "b" + "c")
+    generator.basedir.should.not.exist
+    path = generator.create
+    generator.basedir.should.exist
+    ("%o" % (dir + "a").stat.mode).should == "40700"
+    ("%o" % (dir + "a" + "b").stat.mode).should == "40700"
+    ("%o" % (dir + "a" + "b" + "c").stat.mode).should == "40700"
+  end
+
+  it "should make path with generator's basename" do
+    @generator.create.basename.to_s.should.start_with "test_"
   end
 end

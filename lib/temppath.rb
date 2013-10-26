@@ -103,6 +103,10 @@ module Temppath
       @basename = (option[:basename] || "").to_s
       @unlink = true
 
+      # extend basedir with secure methods
+      @basedir.extend OriginalMethodHolder
+      @basedir.extend SecurePermissionMethods
+
       # register a cleaner for temporary directory
       Kernel.at_exit do
         if @unlink
@@ -120,11 +124,18 @@ module Temppath
     #   pathname of base directory
     def create(option={})
       _basename = option[:basename] || @basename
-      _basedir = Pathname.new(option[:basedir] || @basedir)
+      _basedir = @basedir
+      if option[:basedir]
+        _basedir = Pathname.new(option[:basedir])
+
+        # extend basedir with secure methods
+        _basedir.extend OriginalMethodHolder
+        _basedir.extend SecurePermissionMethods
+      end
 
       # init basedir
       unless _basedir.exist?
-        _basedir.mkdir(0700)
+        _basedir.mkpath
       end
 
       # make a path
@@ -219,6 +230,16 @@ module Temppath
       @generator.basedir
     end
 
+    # Return base name of paths created by Temppath.
+    def basename
+      @generator.basename
+    end
+
+    # Set the base name.
+    def basename=(name)
+      @generator.basename = name
+    end
+
     # Return true if unlink mode is enabled.
     #
     # @return [Boolean]
@@ -227,7 +248,7 @@ module Temppath
       @generator.unlink
     end
 
-    # Set true or false unlink mode.
+    # Set true or false for unlink mode.
     #
     # @param b [Boolean]
     #   unlink mode
