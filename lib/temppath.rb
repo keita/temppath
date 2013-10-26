@@ -16,12 +16,19 @@ require 'fileutils'
 #   "%o" % path.stat.mode #=> "100600" (default permission 0600)
 # @example Touch a temporary file
 #   path = Temppath.touch
-#   path.file? #=> true
+#   path.exist? #=> true
+#   path.file?  #=> true
 #   "%o" % path.stat.mode #=> "100600"
 # @example Create a temporary directory
 #   path = Temppath.mkdir
+#   path.exist?     #=> true
 #   path.directory? #=> true
 #   "%o" % path.stat.mode #=> "40700"
+# @example Use temporary path generator
+#   temppath = Temppath::Generator.new("/tmp/other-dir")
+#   temppath.create
+#   temppath.mkdir
+#   temppath.touch
 module Temppath
   # OriginalMethodHolder keeps some original methods of Pathname.
   module OriginalMethodHolder
@@ -72,14 +79,37 @@ module Temppath
     end
   end
 
-  class << self
+  # Generator generates temporary path in the base directory.
+  class Generator
     # @return [Pathname]
     #   defalut base directory for paths created by Temppath
     attr_reader :basedir
 
+    # @return [String]
+    #   defalut base name
+    attr_accessor :basename
+
     # @return [Boolean]
     #   true if unlink mode is enabled
     attr_accessor :unlink
+
+    # @param basedir [Pathname]
+    #   generator's base directory
+    # @param option [Hash]
+    # @option option [String] :basename
+    #   prefix of filename
+    def initialize(basedir, option={})
+      @basedir = Pathname.new(basedir)
+      @basename = (option[:basename] || "").to_s
+      @unlink = true
+
+      # register a cleaner for temporary directory
+      Kernel.at_exit do
+        if @unlink
+          remove_basedir rescue Errno::ENOENT
+        end
+      end
+    end
 
     # Create a temporary path. This method creates no files.
     #
@@ -89,18 +119,42 @@ module Temppath
     # @option option [Pathname] :basedir
     #   pathname of base directory
     def create(option={})
-      basename = option[:basename] || ""
-      _basedir = option[:basedir] || basedir
-      path = Pathname.new(_basedir) + (basename.to_s + generate_uuid)
+      _basename = option[:basename] || @basename
+      _basedir = Pathname.new(option[:basedir] || @basedir)
+
+      # init basedir
+      unless _basedir.exist?
+        _basedir.mkdir(0700)
+      end
+
+      # make a path
+      path = Pathname.new(_basedir) + (_basename.to_s + generate_uuid)
+
+      # extend path object with secure methods
       path.extend OriginalMethodHolder
       path.extend SecurePermissionMethods
-      if _basedir != basedir
-        Kernel.at_exit {FileUtils.remove_entry_secure(path) rescue Errno::ENOENT}
+
+      # register a file cleaner if the path is not in basedir
+      if _basedir != @basedir
+        Kernel.at_exit do
+          if @unlink
+            FileUtils.remove_entry_secure(path) rescue Errno::ENOENT
+          end
+        end
       end
+
       return path
     end
 
     # Create a temporary directory.
+    #
+    # @param option [Hash]
+    # @option option [Integer] :mode
+    #   mode for the directory permission
+    # @option option [String] :basename
+    #   prefix of directory name
+    # @option option [Pathname] :basedir
+    #   pathname of base directory
     def mkdir(option={})
       mode = option[:mode] || 0700
       path = create(option)
@@ -109,22 +163,19 @@ module Temppath
     end
 
     # Create a empty file.
+    #
+    # @param option [Hash]
+    # @option option [Integer] :mode
+    #   mode for the file permission
+    # @option option [String] :basename
+    #   prefix of filename
+    # @option option [Pathname] :basedir
+    #   pathname of base directory
     def touch(option={})
       mode = option[:mode] || 0600
       path = create(option)
       path.open("w", mode)
       return path
-    end
-
-    # Remove current base directory and change to use a new base directory.
-    #
-    # @param basedir [Pathname]
-    #   new base directory, or nil
-    # @return [Pathname]
-    #   new base directory
-    def update_basedir(basedir=nil)
-      remove_basedir
-      @basedir = basedir || create_basedir
     end
 
     # Remove current temporary directory.
@@ -136,14 +187,6 @@ module Temppath
 
     private
 
-    # Create a new base directory.
-    #
-    # @return [Pathname]
-    #   base directory
-    def create_basedir
-      Pathname.new(Dir.mktmpdir("ruby-temppath-"))
-    end
-
     # Generate random UUID for filename of temporary path.
     #
     # @return [String]
@@ -153,13 +196,92 @@ module Temppath
     end
   end
 
-  @basedir = create_basedir
-  @unlink = true
-end
+  class << self
+    # Create a new base directory.
+    #
+    # @return [Pathname]
+    #   base directory
+    def create_basedir
+      Pathname.new(Dir.mktmpdir("ruby-temppath-"))
+    end
+    private :create_basedir
+  end
 
-# Remove Temppath's temporary directory.
-Kernel.at_exit do
-  if Temppath.unlink
-    Temppath.remove_basedir rescue Errno::ENOENT
+  # default generator
+  @generator = Generator.new(create_basedir)
+
+  class << self
+    # Return base directory of paths created by Temppath.
+    #
+    # @return [Pathname]
+    #   base directory
+    def basedir
+      @generator.basedir
+    end
+
+    # Return true if unlink mode is enabled.
+    #
+    # @return [Boolean]
+    #   true if unlink mode is enabled
+    def unlink
+      @generator.unlink
+    end
+
+    # Set true or false unlink mode.
+    #
+    # @param b [Boolean]
+    #   unlink mode
+    def unlink=(b)
+      @generator.unlink = b
+    end
+
+    # Create a temporary path. This method creates no files.
+    #
+    # @param option [Hash]
+    # @option option [String] :basename
+    #   prefix of filename
+    # @option option [Pathname] :basedir
+    #   pathname of base directory
+    def create(option={})
+      @generator.create(option)
+    end
+
+    # Create a temporary directory.
+    #
+    # @param option [Hash]
+    # @option option [Integer] :mode
+    #   mode for the directory permission
+    # @option option [String] :basename
+    #   prefix of directory name
+    # @option option [Pathname] :basedir
+    #   pathname of base directory
+    def mkdir(option={})
+      @generator.mkdir(option)
+    end
+
+    # Create a empty file.
+    def touch(option={})
+      @generator.touch(option)
+    end
+
+    # Remove current base directory and change to use a new base directory.
+    #
+    # @param basedir [Pathname]
+    #   new base directory, or nil
+    # @return [Pathname]
+    #   new base directory
+    def update_basedir(basedir=nil)
+      @generator.remove_basedir
+      _basedir = basedir || create_basedir
+      @generator = Generator.new(_basedir)
+      return _basedir
+    end
+
+    # Remove current temporary directory.
+    #
+    # @return [void]
+    def remove_basedir
+      @generator.remove_basedir
+    end
   end
 end

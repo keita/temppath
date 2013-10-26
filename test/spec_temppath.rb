@@ -1,6 +1,6 @@
 require 'temppath'
 
-describe 'Temppath' do
+describe Temppath do
   before do
     Temppath.update_basedir
   end
@@ -115,5 +115,68 @@ describe 'Temppath' do
     path = Temppath.touch
     path.should.file
     ("%o" % path.stat.mode).should == "100600"
+  end
+end
+
+describe Temppath::Generator do
+  before do
+    Temppath.update_basedir
+    @dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    @generator = Temppath::Generator.new(@dir)
+  end
+
+  it "should generate a path" do
+    path = @generator.create
+    path.should.kind_of Pathname
+    path.dirname.to_s.should == @dir
+    path.should.not.exist
+  end
+
+  it "should make a directory" do
+    path = @generator.mkdir
+    path.should.kind_of Pathname
+    path.dirname.to_s.should == @dir
+    path.should.exist
+    path.should.directory
+  end
+
+  it "should make a file" do
+    path = @generator.touch
+    path.should.kind_of Pathname
+    path.dirname.to_s.should == @dir
+    path.should.exist
+    path.should.file
+  end
+
+  it "should have own base directory" do
+    Temppath.basedir.should != @generator.basedir
+
+    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    generator = Temppath::Generator.new(dir)
+    generator.basedir.should != @generator.basedir
+  end
+
+  it "should make base directory with #create if it doesn't exist" do
+    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    generator = Temppath::Generator.new(dir + "create")
+    generator.basedir.should.not.exist
+    generator.create
+    generator.basedir.should.exist
+  end
+
+  it "should make base directory with #mkdir if it doesn't exist" do
+    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    generator = Temppath::Generator.new(dir + "mkdir")
+    generator.basedir.should.not.exist
+    generator.create
+    generator.basedir.should.exist
+  end
+
+  it "should make base directory with #touch if it doesn't exist" do
+    dir = Dir.mktmpdir("ruby-temppath-generator-test")
+    generator = Temppath::Generator.new(dir + "touch")
+    generator.basedir.should.not.exist
+    generator.create
+    generator.basedir.should.exist
   end
 end
